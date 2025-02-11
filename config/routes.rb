@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  # Devise Token Auth routes for user authentication
+  mount_devise_token_auth_for 'User', at: 'auth'
   get 'hello_world', to: 'hello_world#index'
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -13,8 +15,17 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
 
-  resources :media, only: [:create, :index]
-  #root 'media#index'
+  resources :media, only: [:create, :index, :destroy]
+    #root 'media#index'
   root 'home#index' # This serves React
+  resources :users, only: [:create, :show, :update]  # Example route
+  post '/register', to: 'users#create'  # Custom registration endpoint
+  post "login", to: "users#login"  # Custom login route
+  delete '/logout', to: 'users#logout'
+
+  # Define a route to fetch the current user
+get '/current_user', to: 'users#show_current_user'
+  devise_scope :user do
+    put 'users/update_profile', to: 'users#update'  end
 
 end

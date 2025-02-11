@@ -404,6 +404,7 @@ DEPENDENCIES
   brakeman
   capybara
   debug
+  devise
   devise_token_auth
   jbuilder
   kamal

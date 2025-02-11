@@ -31,6 +31,17 @@ class MediaController < ApplicationController
       render json: uploaded_media, status: :created
     end
   
+    def destroy
+        media = Medium.find_by(id: params[:id])
+        
+        if media&.destroy
+          render json: { message: "Media deleted successfully" }, status: :ok
+        else
+          render json: { error: "Failed to delete media" }, status: :unprocessable_entity
+        end
+      end
+    
+
     def index
       @media = Medium.order(created_at: :desc)
   
