@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Masonry from "react-masonry-css";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import "../components/media.css"; // Ensure the CSS file is correctly linked
 
 const MediaGallery = ({ media, setMedia }) => {
@@ -23,7 +24,6 @@ const MediaGallery = ({ media, setMedia }) => {
         throw new Error(data.error || "Failed to delete media");
       }
 
-      // Remove deleted media from state
       setMedia((prevMedia) => prevMedia.filter((item) => item.id !== mediaId));
       setSelectedMedia(null);
     } catch (error) {
@@ -32,29 +32,56 @@ const MediaGallery = ({ media, setMedia }) => {
     }
   };
 
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const reorderedMedia = Array.from(media);
+    const [movedItem] = reorderedMedia.splice(result.source.index, 1);
+    reorderedMedia.splice(result.destination.index, 0, movedItem);
+
+    setMedia(reorderedMedia);
+  };
+
   return (
     <>
-      {/* Masonry Grid */}
-      <Masonry
-        breakpointCols={{ default: 4, 1100: 3, 700: 2, 500: 1 }}
-        className="my-masonry-grid"
-        columnClassName="my-masonry-grid_column"
-      >
-        {media.map((item) => (
-          <div key={item.id} className="media-item" onClick={() => setSelectedMedia(item)}>
-            {item.file?.content_type?.startsWith("video/") ? (
-              <video controls className="media-content">
-                <source src={item.file.url} type={item.file.content_type} />
-              </video>
-            ) : (
-              <img src={item.file?.url} alt="Media" className="media-content" />
-            )}
-            <div className="media-overlay">{item.title}</div>
-          </div>
-        ))}
-      </Masonry>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="media-gallery" direction="horizontal">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps} className="masonry-container">
+              <Masonry
+                breakpointCols={{ default: 4, 1100: 3, 700: 2, 500: 1 }}
+                className="masonry-grid"
+                columnClassName="masonry-grid_column"
+              >
+                {media.map((item, index) => (
+                  <Draggable key={item.id} draggableId={item.id.toString()} index={index}>
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className="media-item"
+                        onClick={() => setSelectedMedia(item)}
+                      >
+                        {item.file?.content_type?.startsWith("video/") ? (
+                          <video controls className="media-content">
+                            <source src={item.file.url} type={item.file.content_type} />
+                          </video>
+                        ) : (
+                          <img src={item.file?.url} alt="Media" className="media-content" />
+                        )}
+                        <div className="media-overlay">{item.title}</div>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+              </Masonry>
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
 
-      {/* Popup Modal */}
       {selectedMedia && (
         <div className="popup-overlay" onClick={() => setSelectedMedia(null)}>
           <div className="popup-content" onClick={(e) => e.stopPropagation()}>
